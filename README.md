@@ -29,11 +29,13 @@ cd "Victury Group Test task"
 
 ### 2. Настройка переменных окружения
 ```env
-BOT_TOKEN=your_telegram_bot_token
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_password
-POSTGRES_DB=telegram_bot
-REDIS_URL=redis://redis:6379/0
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
+DATABASE_URL=
+BOT_TOKEN=
+REDIS_HOST=
+REDIS_PORT=
 
 Ну а это мой
 POSTGRES_USER=postgres
