@@ -21,8 +21,8 @@
 ### 1. Подготовка окружения
 ```bash
 # Клонирование репозитория
-git clone <repository-url>
-cd "Victury Group Test task"
+git clone https://github.com/An4nasik/VictoryGroupTest_tast
+cd "VictoryGroupTest_tast"
 
 # Заполните переменные окружения
 ```
