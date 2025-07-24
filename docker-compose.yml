@@ -1,0 +1,61 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    env_file:
+      - .env
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: Europe/Moscow
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+
+  loki:
+    image: grafana/loki:2.8.2
+    restart: always
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - '3100:3100'
+
+  grafana:
+    image: grafana/grafana:9.5.0
+    restart: always
+    depends_on:
+      - loki
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_LOGS_TABLES_ENABLED: 'true'
+    ports:
+      - '3000:3000'
+
+  bot:
+    build: .
+    container_name: telegram_bot
+    environment:
+      - TZ=Europe/Moscow
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    restart: always
+
+volumes:
+  pgdata:
