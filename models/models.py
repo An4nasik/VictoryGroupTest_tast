@@ -24,7 +24,7 @@ class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     email: Mapped[str] = mapped_column(sa.String, unique=True, index=True)
-    telegram_id: Mapped[int] = mapped_column(unique=True, index=True)
+    telegram_id: Mapped[int] = mapped_column(sa.BigInteger, unique=True, index=True)
     role_id: Mapped[int] = mapped_column(sa.ForeignKey("ROLES.id"))
     role: Mapped["Role"] = relationship(back_populates="users")
     created_newsletters: Mapped[list["Newsletter"]] = relationship(

@@ -204,88 +204,108 @@ class NewsletterService:
     async def _send_message_to_user(self, chat_id: int, newsletter: Newsletter):
         reply_markup = self._create_inline_keyboard(newsletter)
         content_type = getattr(newsletter, "content_type", ContentTypeEnum.TEXT)
-        if content_type == ContentTypeEnum.TEXT:
-            await self.bot.send_message(
-                chat_id=chat_id,
-                text=newsletter.text,
-                parse_mode="HTML",
-                reply_markup=reply_markup,
-            )
-        elif content_type == ContentTypeEnum.PHOTO:
-            media_file = self._get_media_file(newsletter, "photo")
-            if media_file:
-                await self.bot.send_photo(
+
+        try:
+            if content_type == ContentTypeEnum.TEXT:
+                await self.bot.send_message(
                     chat_id=chat_id,
-                    photo=media_file.file_id,
-                    caption=newsletter.text,
+                    text=newsletter.text,
                     parse_mode="HTML",
                     reply_markup=reply_markup,
                 )
+            elif content_type == ContentTypeEnum.PHOTO:
+                media_file = self._get_media_file(newsletter, "photo")
+                if media_file:
+                    await self.bot.send_photo(
+                        chat_id=chat_id,
+                        photo=media_file.file_id,
+                        caption=newsletter.text,
+                        parse_mode="HTML",
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    await self.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"🖼️ [Фото недоступно]\n\n{newsletter.text}",
+                        parse_mode="HTML",
+                        reply_markup=reply_markup,
+                    )
+            elif content_type == ContentTypeEnum.VIDEO:
+                media_file = self._get_media_file(newsletter, "video")
+                if media_file:
+                    await self.bot.send_video(
+                        chat_id=chat_id,
+                        video=media_file.file_id,
+                        caption=newsletter.text,
+                        parse_mode="HTML",
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    await self.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"🎬 [Видео недоступно]\n\n{newsletter.text}",
+                        parse_mode="HTML",
+                        reply_markup=reply_markup,
+                    )
+            elif content_type == ContentTypeEnum.ANIMATION:
+                media_file = self._get_media_file(newsletter, "animation")
+                if media_file:
+                    await self.bot.send_animation(
+                        chat_id=chat_id,
+                        animation=media_file.file_id,
+                        caption=newsletter.text,
+                        parse_mode="HTML",
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    await self.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"🎭 [GIF недоступен]\n\n{newsletter.text}",
+                        parse_mode="HTML",
+                        reply_markup=reply_markup,
+                    )
+            elif content_type == ContentTypeEnum.DOCUMENT:
+                media_file = self._get_media_file(newsletter, "document")
+                if media_file:
+                    await self.bot.send_document(
+                        chat_id=chat_id,
+                        document=media_file.file_id,
+                        caption=newsletter.text,
+                        parse_mode="HTML",
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    await self.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"📎 [Документ недоступен]\n\n{newsletter.text}",
+                        parse_mode="HTML",
+                        reply_markup=reply_markup,
+                    )
             else:
                 await self.bot.send_message(
                     chat_id=chat_id,
-                    text=f"🖼️ [Фото недоступно]\n\n{newsletter.text}",
+                    text=newsletter.text,
                     parse_mode="HTML",
                     reply_markup=reply_markup,
                 )
-        elif content_type == ContentTypeEnum.VIDEO:
-            media_file = self._get_media_file(newsletter, "video")
-            if media_file:
-                await self.bot.send_video(
-                    chat_id=chat_id,
-                    video=media_file.file_id,
-                    caption=newsletter.text,
-                    parse_mode="HTML",
-                    reply_markup=reply_markup,
-                )
-            else:
-                await self.bot.send_message(
-                    chat_id=chat_id,
-                    text=f"🎬 [Видео недоступно]\n\n{newsletter.text}",
-                    parse_mode="HTML",
-                    reply_markup=reply_markup,
-                )
-        elif content_type == ContentTypeEnum.ANIMATION:
-            media_file = self._get_media_file(newsletter, "animation")
-            if media_file:
-                await self.bot.send_animation(
-                    chat_id=chat_id,
-                    animation=media_file.file_id,
-                    caption=newsletter.text,
-                    parse_mode="HTML",
-                    reply_markup=reply_markup,
-                )
-            else:
-                await self.bot.send_message(
-                    chat_id=chat_id,
-                    text=f"🎭 [GIF недоступен]\n\n{newsletter.text}",
-                    parse_mode="HTML",
-                    reply_markup=reply_markup,
-                )
-        elif content_type == ContentTypeEnum.DOCUMENT:
-            media_file = self._get_media_file(newsletter, "document")
-            if media_file:
-                await self.bot.send_document(
-                    chat_id=chat_id,
-                    document=media_file.file_id,
-                    caption=newsletter.text,
-                    parse_mode="HTML",
-                    reply_markup=reply_markup,
-                )
-            else:
-                await self.bot.send_message(
-                    chat_id=chat_id,
-                    text=f"📎 [Документ недоступен]\n\n{newsletter.text}",
-                    parse_mode="HTML",
-                    reply_markup=reply_markup,
-                )
-        else:
-            await self.bot.send_message(
-                chat_id=chat_id,
-                text=newsletter.text,
-                parse_mode="HTML",
-                reply_markup=reply_markup,
-            )
+        except Exception as e:
+            logger.error(f"Ошибка отправки медиа пользователю {chat_id}: {e}")
+            raise
+
+    def _get_media_file(self, newsletter: Newsletter, file_type: str):
+        """Получает медиа файл указанного типа из рассылки"""
+        if not newsletter.media_files:
+            logger.warning(f"У рассылки {newsletter.id} нет медиа файлов")
+            return None
+
+        for media_file in newsletter.media_files:
+            if media_file.file_type.lower() == file_type.lower():
+                logger.debug(f"Найден медиа файл типа {file_type} для рассылки {newsletter.id}")
+                return media_file
+
+        logger.warning(f"Медиа файл типа {file_type} не найден для рассылки {newsletter.id}")
+        return None
+
     def _create_inline_keyboard(
         self, newsletter: Newsletter
     ) -> InlineKeyboardMarkup | None:
